@@ -128,4 +128,4 @@ def compute_mfccs(signal, sample_rate=16000, n_mfcc=13, n_fft=2048,
             (np.arange(num_filters) + 0.5) / num_filters
         ).dot(log_mel_spectrum[i])
     
-    return mfccs
+    return mfccs.transpose(1,0)
