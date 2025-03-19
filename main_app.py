@@ -13,6 +13,7 @@ gi.require_version('Gst', '1.0')
 
 from gi.repository import GObject
 from gi.repository import Gtk, Gdk, Gst, GLib, cairo, Pango
+from utils.mfccs import compute_mfccs
 from neural_network_class import NeuralNetwork
 
 class LungDiagnosisWindow(Gtk.Window):
@@ -70,7 +71,7 @@ class LungDiagnosisWindow(Gtk.Window):
         self.host = host 
         self.port = 12345
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.network = NeuralNetwork("models/model.tflite")
+        self.network = NeuralNetwork("models/modelrawimp.tflite")
         self.init = True
 
     def add_button(self, container, icon_path, callback, tooltip_text):
@@ -169,6 +170,7 @@ class LungDiagnosisWindow(Gtk.Window):
     def on_start_clicked(self, widget):
         """Acción cuando se presiona el botón "Start"."""
         if self.init:
+           print("Conectando con " + self.host)
            self.client.connect((self.host,self.port))
            self.init = False
         if not self.is_beating:
@@ -342,7 +344,15 @@ class LungDiagnosisWindow(Gtk.Window):
             predictions = []
             for d in audio_data:
                 print(d.shape)
-                self.network.launch_inference(d)
+                self.network.launch_inference(compute_mfccs(
+                                                d, 
+                                                sample_rate=16000, 
+                                                n_mfcc=20, 
+                                                n_fft=2048, 
+                                                hop_length=512, 
+                                                window='hann',
+                                                num_filters=128,
+                                                htk=False))
                 start_time = time.time()
                 classification = self.network.get_results()
                 stop_time = time.time()
@@ -352,7 +362,7 @@ class LungDiagnosisWindow(Gtk.Window):
                 print(f"Inference time: {inference_time} seconds")
                 disease = np.argmax(classification)
                 predictions.append((classification[disease], self.diseases[disease]))
-                if disease < 0.8:
+                if classification[disease] < 0.8:
                     print("Unclear result, take another sample")
                 else:
                     print(self.diseases[disease])
@@ -363,7 +373,7 @@ class LungDiagnosisWindow(Gtk.Window):
 
 
 if __name__ == '__main__':
-    os.system('sudo udhcpc -i wlan0')
+    #os.system('sudo udhcpc -i wlan0')
     host = sys.argv[1]
     win = LungDiagnosisWindow(host)
     win.connect("destroy", Gtk.main_quit)
