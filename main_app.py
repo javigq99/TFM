@@ -344,22 +344,21 @@ class LungDiagnosisWindow(Gtk.Window):
             predictions = []
             for d in audio_data:
                 print(d.shape)
-                self.network.launch_inference(compute_mfccs(
-                                                d, 
-                                                sample_rate=16000, 
-                                                n_mfcc=20, 
-                                                n_fft=2048, 
-                                                hop_length=512, 
-                                                window='hann',
-                                                num_filters=128,
-                                                htk=False))
+                preprocess_start = time.time()
+                mfccs = compute_mfccs(d, sample_rate=16000, n_mfcc=20, n_fft=2048, hop_length=512, window='hann',num_filters=128,htk=False)
+                preprocess_finish = time.time()
+                preprocess_time = preprocess_finish - preprocess_start
+                print(f"Preproccess time: {preprocess_time} seconds")
+
                 start_time = time.time()
-                classification = self.network.get_results()
+                self.network.launch_inference(mfccs)
                 stop_time = time.time()
-                print(classification)
                 inference_time = stop_time - start_time
                 inference_times.append(inference_time)
                 print(f"Inference time: {inference_time} seconds")
+
+                classification = self.network.get_results()
+                print(classification)
                 disease = np.argmax(classification)
                 predictions.append((classification[disease], self.diseases[disease]))
                 if classification[disease] < 0.8:
