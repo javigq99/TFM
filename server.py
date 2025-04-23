@@ -6,7 +6,8 @@ import librosa
 import pickle
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-host = '192.168.0.205'
+host_name = socket.gethostname()
+host = socket.gethostbyname_ex(host_name)[2][2]
 port = 12345
 sr = 16000
 segment_duration = 5

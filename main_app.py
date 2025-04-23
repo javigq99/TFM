@@ -17,7 +17,7 @@ from utils.mfccs import compute_mfccs
 from neural_network_class import NeuralNetwork
 
 class LungDiagnosisWindow(Gtk.Window):
-    def __init__(self, host):
+    def __init__(self, host, model):
         # Inicializar la ventana principal
         Gtk.Window.__init__(self, title="Lung Diagnosis")
 
@@ -71,7 +71,7 @@ class LungDiagnosisWindow(Gtk.Window):
         self.host = host 
         self.port = 12345
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.network = NeuralNetwork("models/modelrawimp.tflite")
+        self.network = NeuralNetwork("models/" + model)
         self.init = True
 
     def add_button(self, container, icon_path, callback, tooltip_text):
@@ -374,7 +374,8 @@ class LungDiagnosisWindow(Gtk.Window):
 if __name__ == '__main__':
     #os.system('sudo udhcpc -i wlan0')
     host = sys.argv[1]
-    win = LungDiagnosisWindow(host)
+    model = sys.argv[2]
+    win = LungDiagnosisWindow(host, model)
     win.connect("destroy", Gtk.main_quit)
     win.show_all()
     Gtk.main()
